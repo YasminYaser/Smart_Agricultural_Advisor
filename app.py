@@ -97,7 +97,8 @@ header[data-testid="stHeader"] {background: transparent;}
 
 /* input cards */
 [class*="st-key-soil_"], [class*="st-key-wx_"], [class*="st-key-fert"] {
-  border-radius: 16px; padding: 12px 14px 8px; transition: transform .2s ease, box-shadow .2s ease;
+  border-radius: 16px; padding: 14px 14px 16px; min-height: 148px; gap: .35rem !important;
+  transition: transform .2s ease, box-shadow .2s ease;
   animation: fadeup .6s ease both;}
 [class*="st-key-soil_"] {background: #f0f9f2; border: 1px solid #dcefe2;}
 [class*="st-key-wx_"] {background: #eff6fd; border: 1px solid #d9e8f6;}
@@ -111,7 +112,7 @@ header[data-testid="stHeader"] {background: transparent;}
 [class*="st-key-soil_"] [data-baseweb="input"], [class*="st-key-wx_"] [data-baseweb="input"], [class*="st-key-fert"] [data-baseweb="input"],
 [class*="st-key-soil_"] [data-baseweb="base-input"], [class*="st-key-wx_"] [data-baseweb="base-input"], [class*="st-key-fert"] [data-baseweb="base-input"] {
   background: transparent !important; border: none !important;}
-.rng {font-size: .72rem; color: #8aa396; margin: -4px 0 4px 2px;}
+.rng {font-size: .74rem; color: #8aa396; margin: 2px 0 0 2px; line-height: 1.2;}
 
 /* button */
 .stButton > button {width: 100%; max-width: 420px; display: block; margin: 0 auto; border: none; border-radius: 14px; padding: .8rem 1rem; font-weight: 800; font-size: 1.05rem;
@@ -223,13 +224,13 @@ with st.container(key="panel"):
             fertilizer = st.number_input(
                 "Fertilizer (kg/ha)", min_value=0.0, max_value=200.0,
                 value=float(round(fert_mean, 1)), step=0.5, format="%.1f",
-                disabled=not use_fert,
+                disabled=not use_fert, label_visibility="collapsed",
             )
             if not use_fert:
                 fertilizer = float(fert_mean)
             st.markdown(
                 '<div class="rng">0 – 200</div>' if use_fert
-                else f'<div class="rng">Using average ({fert_mean:.1f})</div>',
+                else f'<div class="rng">Using dataset average ({fert_mean:.1f})</div>',
                 unsafe_allow_html=True,
             )
     st.write("")
