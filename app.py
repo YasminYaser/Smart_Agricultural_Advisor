@@ -46,149 +46,109 @@ CSS = """
 #MainMenu, footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
 
-/* animated gradient background */
 .stApp {
-  background: linear-gradient(125deg, #e6f7ea, #f7fbe8, #dff3ef, #eaf8e2, #e6f7ea);
-  background-size: 400% 400%;
-  animation: bgmove 22s ease infinite;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(52,211,153,.16), transparent 42%),
+    radial-gradient(circle at 92% 8%, rgba(251,191,36,.08), transparent 38%),
+    #0e1913;
+  color: #e8f3ec;
 }
-@keyframes bgmove {0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}}
-
-.block-container {position: relative; z-index: 1; padding-top: 2rem; max-width: 820px;}
-
-/* floating emoji layer */
-.floaters {position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;}
-.floaters span {position: absolute; bottom: -60px; font-size: 28px; opacity: 0;
-  animation: rise linear infinite;}
-@keyframes rise {
-  0%   {transform: translateY(0) rotate(0deg); opacity: 0;}
-  10%  {opacity: .55;}
-  90%  {opacity: .45;}
-  100% {transform: translateY(-115vh) rotate(360deg); opacity: 0;}
+/* slow glowing orb behind the page */
+.stApp::before {
+  content: ""; position: fixed; width: 520px; height: 520px; top: -160px; left: 50%;
+  margin-left: -260px; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(52,211,153,.20), transparent 65%);
+  filter: blur(30px); animation: drift 14s ease-in-out infinite alternate;
 }
-.floaters span:nth-child(1){left:6%;  animation-duration:19s; animation-delay:0s;}
-.floaters span:nth-child(2){left:18%; animation-duration:24s; animation-delay:4s;  font-size:22px;}
-.floaters span:nth-child(3){left:32%; animation-duration:21s; animation-delay:9s;}
-.floaters span:nth-child(4){left:47%; animation-duration:26s; animation-delay:2s;  font-size:34px;}
-.floaters span:nth-child(5){left:61%; animation-duration:20s; animation-delay:7s;}
-.floaters span:nth-child(6){left:74%; animation-duration:23s; animation-delay:12s; font-size:24px;}
-.floaters span:nth-child(7){left:86%; animation-duration:25s; animation-delay:5s;}
-.floaters span:nth-child(8){left:94%; animation-duration:18s; animation-delay:10s; font-size:20px;}
+@keyframes drift {from {transform: translateX(-140px) scale(1);} to {transform: translateX(140px) scale(1.15);}}
+
+.block-container {position: relative; z-index: 1; padding-top: 2.2rem; max-width: 840px;}
+
+@keyframes fadeup {from {opacity: 0; transform: translateY(16px);} to {opacity: 1; transform: translateY(0);}}
 
 /* hero */
-.hero {text-align: center; padding: 10px 0 18px; animation: fadeup .9s ease both;}
-.hero .big {font-size: 64px; display: inline-block; animation: sway 3.5s ease-in-out infinite; transform-origin: 50% 90%;}
-@keyframes sway {0%,100%{transform: rotate(-7deg)} 50%{transform: rotate(7deg)}}
-.hero h1 {font-size: 2.6rem; font-weight: 800; margin: 4px 0 6px; line-height: 1.15;
-  background: linear-gradient(90deg, #1f8a4c, #7bc043, #1f8a4c);
-  background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-  animation: shine 5s linear infinite;}
-@keyframes shine {to {background-position: 200% center;}}
-.hero p {color: #3f6b52; font-size: 1.05rem; margin: 0;}
-.pills {margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;}
-.pill {background: rgba(255,255,255,.75); border: 1px solid #cfe9d6; color: #25663f;
-  padding: 5px 14px; border-radius: 999px; font-size: .85rem; font-weight: 600;
-  backdrop-filter: blur(6px); animation: fadeup .9s ease both;}
-.pill:nth-child(2){animation-delay:.15s} .pill:nth-child(3){animation-delay:.3s}
-
-@keyframes fadeup {from {opacity: 0; transform: translateY(18px);} to {opacity: 1; transform: translateY(0);}}
+.hero {text-align: center; padding: 8px 0 22px; animation: fadeup .8s ease both;}
+.tag {display: inline-block; font-size: .72rem; letter-spacing: .18em; font-weight: 700; color: #34d399;
+  border: 1px solid rgba(52,211,153,.35); background: rgba(52,211,153,.08); padding: 5px 14px; border-radius: 999px;}
+.hero h1 {font-size: 2.7rem; font-weight: 800; margin: 14px 0 8px; line-height: 1.15; color: #f4faf6; letter-spacing: -.5px;}
+.hero h1 span {background: linear-gradient(90deg, #34d399, #a3e635, #fbbf24); -webkit-background-clip: text;
+  background-clip: text; -webkit-text-fill-color: transparent; color: transparent;}
+.hero p {color: #9db8a8; font-size: 1.05rem; margin: 0;}
 
 /* input cards */
 [data-testid="stVerticalBlockBorderWrapper"] {
-  background: rgba(255,255,255,.72);
-  border: 1px solid #d4ecda !important;
-  border-radius: 20px !important;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 8px 28px rgba(46,158,91,.10);
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 18px !important;
   animation: fadeup .8s ease both;
-  transition: transform .25s ease, box-shadow .25s ease;
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
 [data-testid="stVerticalBlockBorderWrapper"]:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 34px rgba(46,158,91,.18);
+  border-color: rgba(52,211,153,.45) !important;
+  box-shadow: 0 10px 30px rgba(52,211,153,.10);
 }
-.card-title {font-weight: 700; color: #1b5e3a; font-size: 1.05rem; margin-bottom: 2px;}
+.card-title {font-weight: 700; color: #34d399; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px;}
+
+.stApp label, .stApp [data-testid="stWidgetLabel"] p {color: #d5e6db !important; font-weight: 500;}
+.stApp [data-testid="stCaptionContainer"] {color: #8aa595;}
 
 /* button */
 .stButton > button {
-  width: 100%; border: none; border-radius: 14px; padding: .8rem 1rem; font-weight: 700; font-size: 1.05rem;
-  background: linear-gradient(90deg, #2e9e5b, #7bc043); color: #fff;
-  box-shadow: 0 6px 18px rgba(46,158,91,.35);
-  transition: transform .2s ease, box-shadow .2s ease;
-  animation: pulse 2.6s ease-in-out infinite;
+  width: 100%; border: none; border-radius: 14px; padding: .85rem 1rem; font-weight: 700; font-size: 1.05rem;
+  background: #34d399; color: #06281a;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
-.stButton > button:hover {transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 26px rgba(46,158,91,.45); color:#fff;}
+.stButton > button:hover {background: #4ee0ad; color: #06281a; transform: translateY(-2px); box-shadow: 0 10px 26px rgba(52,211,153,.35);}
 .stButton > button:active {transform: scale(.98);}
-@keyframes pulse {0%,100%{box-shadow: 0 6px 18px rgba(46,158,91,.35)} 50%{box-shadow: 0 6px 30px rgba(123,192,67,.65)}}
 
 /* results */
-.results {display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;}
+.results {display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;}
 @media (max-width: 640px) {.results {grid-template-columns: 1fr;}}
-.rcard {background: rgba(255,255,255,.9); border: 1px solid #d4ecda; border-radius: 22px; padding: 22px 20px;
-  text-align: center; box-shadow: 0 10px 30px rgba(46,158,91,.14);
-  animation: pop .7s cubic-bezier(.2,1.4,.4,1) both;}
-.rcard.second {animation-delay: .18s;}
-@keyframes pop {from {opacity: 0; transform: scale(.7) translateY(20px);} to {opacity: 1; transform: scale(1) translateY(0);}}
-.rlabel {color: #5b8a6e; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700;}
-.remoji {font-size: 68px; line-height: 1.1; margin: 6px 0; display: inline-block; animation: bounce 2s ease-in-out infinite;}
-@keyframes bounce {0%,100%{transform: translateY(0)} 50%{transform: translateY(-10px)}}
-.rvalue {font-size: 2.1rem; font-weight: 800; color: #1b5e3a; line-height: 1.15;}
-.rsub {color: #5b8a6e; font-size: .9rem; margin-top: 4px;}
+.rcard {background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10); border-radius: 20px;
+  padding: 24px 20px; text-align: center; animation: pop .6s cubic-bezier(.2,1.2,.4,1) both;}
+.rcard.second {animation-delay: .15s;}
+@keyframes pop {from {opacity: 0; transform: translateY(24px) scale(.96);} to {opacity: 1; transform: translateY(0) scale(1);}}
+.rlabel {color: #8aa595; font-size: .75rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700;}
+.remoji {font-size: 56px; line-height: 1.2; margin: 8px 0 2px;}
+.rvalue {font-size: 2.1rem; font-weight: 800; color: #34d399; line-height: 1.15;}
+.rvalue.white {color: #f4faf6;}
+.rsub {color: #9db8a8; font-size: .9rem; margin-top: 4px;}
 
-.bars {margin-top: 14px; text-align: left;}
-.brow {display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: .88rem; color: #2f5d44; font-weight: 600;}
-.brow .nm {width: 105px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.bar {flex: 1; height: 10px; background: #e3f3e7; border-radius: 99px; overflow: hidden;}
-.fill {height: 100%; width: var(--w); border-radius: 99px;
-  background: linear-gradient(90deg, #2e9e5b, #9ad14b);
-  animation: grow 1.3s cubic-bezier(.2,.9,.3,1) both;}
+.bars {margin-top: 16px; text-align: left;}
+.brow {display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: .88rem; color: #cfe3d6; font-weight: 500;}
+.brow .nm {width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.bar {flex: 1; height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden;}
+.fill {height: 100%; width: var(--w); border-radius: 99px; background: linear-gradient(90deg, #34d399, #a3e635);
+  animation: grow 1.2s cubic-bezier(.2,.9,.3,1) both;}
 @keyframes grow {from {width: 0;} to {width: var(--w);}}
-.brow .pc {width: 44px; text-align: right;}
+.brow .pc {width: 42px; text-align: right; color: #9db8a8;}
 
-.gauge {margin: 16px 6px 0;}
-.gauge .bar {height: 14px; background: linear-gradient(90deg, #f6d365, #c8e36b, #4cbf74); opacity: .35; position: relative; overflow: visible;}
-.marker {position: absolute; top: -5px; left: var(--pos); width: 4px; height: 24px; border-radius: 4px; background: #1b5e3a;
-  transform: translateX(-50%); animation: slide 1.4s cubic-bezier(.2,.9,.3,1) both;}
+.gauge {margin: 22px 6px 0;}
+.gauge .bar {height: 10px; background: linear-gradient(90deg, #fbbf24, #a3e635, #34d399); overflow: visible; position: relative;}
+.marker {position: absolute; top: -6px; left: var(--pos); width: 5px; height: 22px; border-radius: 4px; background: #fff;
+  box-shadow: 0 0 10px rgba(255,255,255,.7); transform: translateX(-50%); animation: slide 1.3s cubic-bezier(.2,.9,.3,1) both;}
 @keyframes slide {from {left: 0;} to {left: var(--pos);}}
-.gscale {display: flex; justify-content: space-between; font-size: .75rem; color: #5b8a6e; margin-top: 8px;}
+.gscale {display: flex; justify-content: space-between; font-size: .75rem; color: #8aa595; margin-top: 10px;}
 
-.note {margin-top: 16px; background: rgba(255,255,255,.7); border-left: 4px solid #7bc043; border-radius: 10px;
-  padding: 10px 14px; color: #3f6b52; font-size: .85rem; animation: fadeup 1s ease .4s both;}
-.warnbox {margin-top: 14px; background: #fff7e0; border-left: 4px solid #f0b429; border-radius: 10px;
-  padding: 10px 14px; color: #7a5a00; font-size: .88rem; animation: fadeup .6s ease both;}
+/* expander for the notes */
+[data-testid="stExpander"] {background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08) !important; border-radius: 14px;}
+[data-testid="stExpander"] summary p {color: #cfe3d6 !important;}
 
-/* labels / text colors so they stay readable */
-.stApp label, .stApp [data-testid="stWidgetLabel"] p {color: #1b3a2a !important; font-weight: 600;}
-.footer {text-align: center; color: #6b9a7e; font-size: .8rem; margin: 26px 0 6px;}
+.footer {text-align: center; color: #6f8a7a; font-size: .8rem; margin: 28px 0 6px;}
 </style>
 """
 
-FLOATERS = (
-    '<div class="floaters">'
-    + "".join(f"<span>{e}</span>" for e in ["🌾", "🌱", "🍃", "☀️", "💧", "🌽", "🍀", "🌻"])
-    + "</div>"
-)
-
 HERO = """
 <div class="hero">
-<div class="big">🌾</div>
-<h1>Smart Agricultural Advisor</h1>
-<p>Tell us about your soil and weather. We'll tell you what to grow.</p>
-<div class="pills">
-<span class="pill">🌳 Random Forest · crop</span>
-<span class="pill">⚡ XGBoost · yield</span>
-<span class="pill">🧪 Soil + weather</span>
-</div>
+<span class="tag">AI CROP ADVISOR</span>
+<h1>Smart <span>Agricultural</span> Advisor</h1>
+<p>Enter your soil and weather readings and get the best crop to grow, plus an estimated yield.</p>
 </div>
 """
 
 st.markdown(CSS, unsafe_allow_html=True)
-st.markdown(FLOATERS, unsafe_allow_html=True)
 st.markdown(HERO, unsafe_allow_html=True)
-
-if retrained:
-    st.caption("ℹ️ Saved models couldn't be loaded on this server, so fresh ones were trained from the CSV files.")
 
 # --------------------------------------------------------------------------
 # Inputs
@@ -197,7 +157,7 @@ col_soil, col_weather = st.columns(2)
 
 with col_soil:
     with st.container(border=True):
-        st.markdown('<div class="card-title">🧪 Soil</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">Soil</div>', unsafe_allow_html=True)
         N = st.slider("Nitrogen (N)", 0, 140, 90)
         P = st.slider("Phosphorus (P)", 5, 145, 42)
         K = st.slider("Potassium (K)", 5, 205, 43)
@@ -205,7 +165,7 @@ with col_soil:
 
 with col_weather:
     with st.container(border=True):
-        st.markdown('<div class="card-title">🌤️ Weather</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">Weather</div>', unsafe_allow_html=True)
         temperature = st.slider("Temperature (°C)", 8.0, 44.0, 21.0, step=0.5)
         humidity = st.slider("Humidity (%)", 14.0, 100.0, 82.0, step=1.0)
         rainfall = st.slider("Rainfall (mm)", 20.0, 300.0, 200.0, step=1.0)
@@ -218,7 +178,7 @@ with st.container(border=True):
         fertilizer = float(fert_mean)
         st.caption(f"Using the dataset average: {fert_mean:.1f} kg/ha")
 
-go = st.button("🌱  Get my recommendation", type="primary")
+go = st.button("Get my recommendation", type="primary")
 
 # --------------------------------------------------------------------------
 # Prediction
@@ -269,7 +229,7 @@ if go:
         '<div class="rcard second">'
         '<div class="rlabel">Estimated yield</div>'
         '<div class="remoji">📈</div>'
-        f'<div class="rvalue">{est_yield:.2f} t/ha</div>'
+        f'<div class="rvalue white">{est_yield:.2f} t/ha</div>'
         f'<div class="rsub">{level} compared with the training data</div>'
         '<div class="gauge"><div class="bar">'
         f'<div class="marker" style="--pos:{pos:.0f}%"></div></div>'
@@ -277,16 +237,19 @@ if go:
         '</div>'
         '</div>'
     )
-    if outside:
-        html += (
-            '<div class="warnbox">⚠️ Some inputs are outside the yield model\'s training range, '
-            "so the yield estimate may be unreliable: " + ", ".join(outside) + "</div>"
-        )
-    html += (
-        '<div class="note">ℹ️ The yield model was trained on a separate dataset and is not '
-        "specific to the recommended crop. Treat it as a rough estimate.</div>"
-    )
     st.markdown(html, unsafe_allow_html=True)
-    st.toast(f"Best match: {crop.capitalize()} {CROP_EMOJI.get(crop, '🌱')}")
 
-st.markdown('<div class="footer">Made with 🌱 · Smart Agricultural Advisor</div>', unsafe_allow_html=True)
+    with st.expander("How reliable is the yield estimate?"):
+        if outside:
+            st.write(
+                "Some of your inputs are outside the ranges the yield model was trained on "
+                "(" + ", ".join(outside) + "). For these values the yield number is only a rough guide."
+            )
+        else:
+            st.write("Your inputs are inside the ranges the yield model was trained on.")
+        st.write(
+            "The yield model was trained on a separate dataset and is not specific to the recommended "
+            "crop, so treat it as a general estimate. The crop recommendation does not depend on it."
+        )
+
+st.markdown('<div class="footer">Smart Agricultural Advisor</div>', unsafe_allow_html=True)
