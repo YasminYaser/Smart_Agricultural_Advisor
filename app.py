@@ -10,15 +10,13 @@ st.set_page_config(
     layout="centered",
 )
 
-# --------------------------------------------------------------------------
-# Models (loaded once; retrained automatically if the saved files can't load)
-# --------------------------------------------------------------------------
-@st.cache_resource(show_spinner="Warming up the models 🌱")
+
+@st.cache_resource(show_spinner="Warming up the models...")
 def get_models():
     return load_or_train()
 
 
-rf_model, le, xgb_model, fert_mean, retrained = get_models()
+rf_model, le, xgb_model, fert_mean, _retrained = get_models()
 
 CROP_EMOJI = {
     "apple": "🍎", "banana": "🍌", "blackgram": "🫘", "chickpea": "🫛",
@@ -29,156 +27,217 @@ CROP_EMOJI = {
     "rice": "🌾", "watermelon": "🍉",
 }
 
-# Training ranges of the yield model (used for the reliability warning)
+# Ranges the yield model was trained on (used for the reliability note)
 YIELD_RANGES = {
     "Temperature": (23.8, 40.3),
     "Nitrogen": (58.8, 80.2),
     "Phosphorus": (17.7, 25.2),
     "Potassium": (14.7, 22.1),
 }
+FERT_RANGE = (49.8, 80.2)
 YIELD_MIN, YIELD_MAX = 5.15, 12.34
 
 # --------------------------------------------------------------------------
-# Style + animations
+# Style
 # --------------------------------------------------------------------------
+HILLS = (
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 160' "
+    "preserveAspectRatio='none'%3E%3Cpath d='M0 90 C150 30 300 130 450 80 S700 40 800 90 V160 H0Z' "
+    "fill='%23246b3f' fill-opacity='.55'/%3E%3Cpath d='M0 125 C200 85 350 150 520 112 S720 95 800 125 "
+    "V160 H0Z' fill='%23164d2e' fill-opacity='.9'/%3E%3C/svg%3E"
+)
+
 CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+
+html, body, .stApp, .stApp * {font-family: 'Cairo', 'Segoe UI', sans-serif;}
+.stApp {background: #f1f9f3;}
 #MainMenu, footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
+.block-container {max-width: 880px; padding-top: 1.4rem; padding-bottom: 3rem;}
 
-.stApp {
+@keyframes fadeup {from {opacity: 0; transform: translateY(14px);} to {opacity: 1; transform: translateY(0);}}
+@keyframes glow {0%,100% {opacity: .55; transform: scale(1);} 50% {opacity: .9; transform: scale(1.12);}}
+
+/* top bar */
+.topbar {display: flex; align-items: center; gap: 12px; margin-bottom: 14px; animation: fadeup .6s ease both;}
+.logo {width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #1f7a45, #3dbb6e);
+  display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 6px 16px rgba(31,122,69,.3);}
+.topbar .ar {font-weight: 800; font-size: 1.15rem; color: #123d25; line-height: 1.2;}
+.topbar .en {font-size: .8rem; color: #5a7d67; font-weight: 500;}
+
+/* hero banner */
+.hero {position: relative; overflow: hidden; border-radius: 26px; padding: 54px 28px 96px; text-align: center;
   background:
-    radial-gradient(circle at 12% 0%, rgba(52,211,153,.16), transparent 42%),
-    radial-gradient(circle at 92% 8%, rgba(251,191,36,.08), transparent 38%),
-    #0e1913;
-  color: #e8f3ec;
-}
-/* slow glowing orb behind the page */
-.stApp::before {
-  content: ""; position: fixed; width: 520px; height: 520px; top: -160px; left: 50%;
-  margin-left: -260px; border-radius: 50%; pointer-events: none; z-index: 0;
-  background: radial-gradient(circle, rgba(52,211,153,.20), transparent 65%);
-  filter: blur(30px); animation: drift 14s ease-in-out infinite alternate;
-}
-@keyframes drift {from {transform: translateX(-140px) scale(1);} to {transform: translateX(140px) scale(1.15);}}
+    url("__HILLS__") bottom / 100% 110px no-repeat,
+    radial-gradient(circle at 78% 18%, rgba(255,226,140,.35), transparent 38%),
+    linear-gradient(180deg, #0d3a22 0%, #1b5e38 100%);
+  box-shadow: 0 18px 40px rgba(15,61,36,.25); animation: fadeup .7s ease both;}
+.hero .sun {position: absolute; width: 150px; height: 150px; right: 9%; top: 6%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,230,150,.55), transparent 68%); animation: glow 6s ease-in-out infinite;}
+.hero h1 {position: relative; color: #fff; font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin: 0 0 12px;
+  padding: 0; letter-spacing: -.3px;}
+.hero p {position: relative; color: #d3ecdb; font-size: 1.02rem; margin: 0 auto; max-width: 560px;}
+@media (max-width: 640px) {.hero h1 {font-size: 1.8rem;} .hero {padding: 40px 18px 90px;}}
 
-.block-container {position: relative; z-index: 1; padding-top: 2.2rem; max-width: 840px;}
+/* tabs */
+.stTabs {margin-top: -54px; position: relative; z-index: 2;}
+.stTabs [data-baseweb="tab-list"] {background: #fff; border-radius: 18px 18px 0 0; gap: 0; padding: 0;
+  box-shadow: 0 -4px 20px rgba(15,61,36,.08); border-bottom: 1px solid #e3efe7;}
+.stTabs button[role="tab"] {flex: 1; height: 54px; justify-content: center; border-radius: 18px 18px 0 0;}
+.stTabs button[role="tab"] p {font-weight: 700; font-size: .98rem; color: #6a8a76;}
+.stTabs button[role="tab"][aria-selected="true"] p {color: #14532d;}
+.stTabs [data-baseweb="tab-highlight"] {background: #2e9e5b; height: 3px;}
+.stTabs [data-baseweb="tab-border"] {display: none;}
+.stTabs [data-baseweb="tab-panel"] {background: #fff; border-radius: 0 0 22px 22px; padding: 22px 22px 26px;
+  box-shadow: 0 16px 36px rgba(15,61,36,.10);}
+@media (max-width: 640px) {.stTabs [data-baseweb="tab-panel"] {padding: 16px 12px 20px;}}
 
-@keyframes fadeup {from {opacity: 0; transform: translateY(16px);} to {opacity: 1; transform: translateY(0);}}
-
-/* hero */
-.hero {text-align: center; padding: 8px 0 22px; animation: fadeup .8s ease both;}
-.tag {display: inline-block; font-size: .72rem; letter-spacing: .18em; font-weight: 700; color: #34d399;
-  border: 1px solid rgba(52,211,153,.35); background: rgba(52,211,153,.08); padding: 5px 14px; border-radius: 999px;}
-.hero h1 {font-size: 2.7rem; font-weight: 800; margin: 14px 0 8px; line-height: 1.15; color: #f4faf6; letter-spacing: -.5px;}
-.hero h1 span {background: linear-gradient(90deg, #34d399, #a3e635, #fbbf24); -webkit-background-clip: text;
-  background-clip: text; -webkit-text-fill-color: transparent; color: transparent;}
-.hero p {color: #9db8a8; font-size: 1.05rem; margin: 0;}
+/* section titles */
+.sec {display: flex; align-items: center; gap: 10px; font-weight: 800; color: #123d25; font-size: 1.08rem; margin: 6px 0 12px;}
+.sec .ic {width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 17px;}
+.ic.soil {background: #dcf3e3;} .ic.wx {background: #dcecfa;} .ic.fe {background: #fdf0c6;}
 
 /* input cards */
-[data-testid="stVerticalBlockBorderWrapper"] {
-  background: rgba(255,255,255,.035);
-  border: 1px solid rgba(255,255,255,.09) !important;
-  border-radius: 18px !important;
-  animation: fadeup .8s ease both;
-  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
-}
-[data-testid="stVerticalBlockBorderWrapper"]:hover {
-  transform: translateY(-3px);
-  border-color: rgba(52,211,153,.45) !important;
-  box-shadow: 0 10px 30px rgba(52,211,153,.10);
-}
-.card-title {font-weight: 700; color: #34d399; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px;}
-
-.stApp label, .stApp [data-testid="stWidgetLabel"] p {color: #d5e6db !important; font-weight: 500;}
-.stApp [data-testid="stCaptionContainer"] {color: #8aa595;}
+[class*="st-key-soil_"], [class*="st-key-wx_"], [class*="st-key-fert"] {
+  border-radius: 16px; padding: 12px 14px 8px; transition: transform .2s ease, box-shadow .2s ease;
+  animation: fadeup .6s ease both;}
+[class*="st-key-soil_"] {background: #f0f9f2; border: 1px solid #dcefe2;}
+[class*="st-key-wx_"] {background: #eff6fd; border: 1px solid #d9e8f6;}
+[class*="st-key-fert"] {background: #fff9e6; border: 1px solid #f6e8b4;}
+[class*="st-key-soil_"]:hover, [class*="st-key-wx_"]:hover, [class*="st-key-fert"]:hover {
+  transform: translateY(-3px); box-shadow: 0 10px 22px rgba(15,61,36,.10);}
+[class*="st-key-soil_"] label p, [class*="st-key-wx_"] label p, [class*="st-key-fert"] label p {
+  font-size: .8rem !important; color: #55705f !important; font-weight: 600;}
+[class*="st-key-soil_"] input, [class*="st-key-wx_"] input, [class*="st-key-fert"] input {
+  font-size: 1.45rem !important; font-weight: 800 !important; color: #14532d !important; background: transparent !important;}
+[class*="st-key-soil_"] [data-baseweb="input"], [class*="st-key-wx_"] [data-baseweb="input"], [class*="st-key-fert"] [data-baseweb="input"],
+[class*="st-key-soil_"] [data-baseweb="base-input"], [class*="st-key-wx_"] [data-baseweb="base-input"], [class*="st-key-fert"] [data-baseweb="base-input"] {
+  background: transparent !important; border: none !important;}
+.rng {font-size: .72rem; color: #8aa396; margin: -4px 0 4px 2px;}
 
 /* button */
-.stButton > button {
-  width: 100%; border: none; border-radius: 14px; padding: .85rem 1rem; font-weight: 700; font-size: 1.05rem;
-  background: #34d399; color: #06281a;
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-}
-.stButton > button:hover {background: #4ee0ad; color: #06281a; transform: translateY(-2px); box-shadow: 0 10px 26px rgba(52,211,153,.35);}
+.stButton > button {width: 100%; border: none; border-radius: 14px; padding: .8rem 1rem; font-weight: 800; font-size: 1.05rem;
+  background: linear-gradient(90deg, #1f7a45, #2e9e5b); color: #fff; box-shadow: 0 8px 20px rgba(31,122,69,.30);
+  transition: transform .2s ease, box-shadow .2s ease;}
+.stButton > button:hover {color: #fff; transform: translateY(-2px); box-shadow: 0 12px 26px rgba(31,122,69,.42);}
 .stButton > button:active {transform: scale(.98);}
 
 /* results */
-.results {display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;}
+.results {display: grid; grid-template-columns: 1fr 1fr; gap: 16px;}
 @media (max-width: 640px) {.results {grid-template-columns: 1fr;}}
-.rcard {background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10); border-radius: 20px;
-  padding: 24px 20px; text-align: center; animation: pop .6s cubic-bezier(.2,1.2,.4,1) both;}
+.rcard {background: #fff; border: 1px solid #dcefe2; border-radius: 20px; padding: 24px 20px; text-align: center;
+  box-shadow: 0 10px 28px rgba(31,122,69,.10); animation: pop .6s cubic-bezier(.2,1.2,.4,1) both;}
 .rcard.second {animation-delay: .15s;}
-@keyframes pop {from {opacity: 0; transform: translateY(24px) scale(.96);} to {opacity: 1; transform: translateY(0) scale(1);}}
-.rlabel {color: #8aa595; font-size: .75rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700;}
-.remoji {font-size: 56px; line-height: 1.2; margin: 8px 0 2px;}
-.rvalue {font-size: 2.1rem; font-weight: 800; color: #34d399; line-height: 1.15;}
-.rvalue.white {color: #f4faf6;}
-.rsub {color: #9db8a8; font-size: .9rem; margin-top: 4px;}
+@keyframes pop {from {opacity: 0; transform: translateY(22px) scale(.96);} to {opacity: 1; transform: translateY(0) scale(1);}}
+.rlabel {color: #6a8a76; font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700;}
+.remoji {font-size: 58px; line-height: 1.2; margin: 8px 0 2px;}
+.rvalue {font-size: 2.1rem; font-weight: 800; color: #1f7a45; line-height: 1.15;}
+.rvalue.dark {color: #123d25;}
+.rsub {color: #6a8a76; font-size: .9rem; margin-top: 4px;}
 
 .bars {margin-top: 16px; text-align: left;}
-.brow {display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: .88rem; color: #cfe3d6; font-weight: 500;}
-.brow .nm {width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.bar {flex: 1; height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden;}
-.fill {height: 100%; width: var(--w); border-radius: 99px; background: linear-gradient(90deg, #34d399, #a3e635);
+.brow {display: flex; align-items: center; gap: 8px; margin: 9px 0; font-size: .88rem; color: #2f5d44; font-weight: 600;}
+.brow .nm {width: 112px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.bar {flex: 1; height: 9px; background: #e4f1e8; border-radius: 99px; overflow: hidden;}
+.fill {height: 100%; width: var(--w); border-radius: 99px; background: linear-gradient(90deg, #2e9e5b, #9ad14b);
   animation: grow 1.2s cubic-bezier(.2,.9,.3,1) both;}
 @keyframes grow {from {width: 0;} to {width: var(--w);}}
-.brow .pc {width: 42px; text-align: right; color: #9db8a8;}
+.brow .pc {width: 44px; text-align: right; color: #55705f;}
 
-.gauge {margin: 22px 6px 0;}
-.gauge .bar {height: 10px; background: linear-gradient(90deg, #fbbf24, #a3e635, #34d399); overflow: visible; position: relative;}
-.marker {position: absolute; top: -6px; left: var(--pos); width: 5px; height: 22px; border-radius: 4px; background: #fff;
-  box-shadow: 0 0 10px rgba(255,255,255,.7); transform: translateX(-50%); animation: slide 1.3s cubic-bezier(.2,.9,.3,1) both;}
+.gauge {margin: 24px 6px 0;}
+.gauge .bar {height: 10px; background: linear-gradient(90deg, #f6c453, #b4dd5c, #2e9e5b); overflow: visible; position: relative;}
+.marker {position: absolute; top: -6px; left: var(--pos); width: 5px; height: 22px; border-radius: 4px; background: #123d25;
+  transform: translateX(-50%); animation: slide 1.3s cubic-bezier(.2,.9,.3,1) both;}
 @keyframes slide {from {left: 0;} to {left: var(--pos);}}
-.gscale {display: flex; justify-content: space-between; font-size: .75rem; color: #8aa595; margin-top: 10px;}
+.gscale {display: flex; justify-content: space-between; font-size: .75rem; color: #7f998a; margin-top: 10px;}
 
-/* expander for the notes */
-[data-testid="stExpander"] {background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08) !important; border-radius: 14px;}
-[data-testid="stExpander"] summary p {color: #cfe3d6 !important;}
+.chips {display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 18px 0 6px; animation: fadeup .8s ease .3s both;}
+.chip {background: #f0f9f2; border: 1px solid #dcefe2; color: #2f5d44; font-size: .8rem; font-weight: 600; padding: 5px 12px; border-radius: 999px;}
+.chip b {color: #14532d;}
 
-.footer {text-align: center; color: #6f8a7a; font-size: .8rem; margin: 28px 0 6px;}
+.empty {text-align: center; padding: 40px 10px; color: #6a8a76; animation: fadeup .6s ease both;}
+.empty .eico {font-size: 46px; margin-bottom: 6px;}
+.empty b {display: block; color: #123d25; font-size: 1.1rem; margin-bottom: 4px;}
+
+[data-testid="stExpander"] {background: #f7fbf8; border: 1px solid #dcefe2 !important; border-radius: 14px; margin-top: 16px;}
+[data-testid="stExpander"] summary p {color: #14532d !important; font-weight: 700;}
+.footer {text-align: center; color: #7f998a; font-size: .8rem; margin: 26px 0 0;}
 </style>
-"""
+""".replace("__HILLS__", HILLS)
 
-HERO = """
+HEADER = """
+<div class="topbar">
+<div class="logo">🌾</div>
+<div><div class="ar">المرشد الزراعي الذكي</div><div class="en">Smart Agricultural Advisor</div></div>
+</div>
 <div class="hero">
-<span class="tag">AI CROP ADVISOR</span>
-<h1>Smart <span>Agricultural</span> Advisor</h1>
-<p>Enter your soil and weather readings and get the best crop to grow, plus an estimated yield.</p>
+<div class="sun"></div>
+<h1>Choose the right crop… with confidence</h1>
+<p>Enter your soil and weather data. We'll recommend the best crop and estimate the expected yield.</p>
 </div>
 """
 
 st.markdown(CSS, unsafe_allow_html=True)
-st.markdown(HERO, unsafe_allow_html=True)
+st.markdown(HEADER, unsafe_allow_html=True)
+
+tab_in, tab_out = st.tabs(["Enter data", "Result"])
+
+
+def section(icon_cls, icon, title):
+    st.markdown(
+        f'<div class="sec"><span class="ic {icon_cls}">{icon}</span>{title}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def field(prefix, key, label, lo, hi, default, step, fmt=None, rng_text=None):
+    with st.container(key=f"{prefix}_{key}"):
+        v = st.number_input(label, min_value=lo, max_value=hi, value=default, step=step, format=fmt)
+        st.markdown(f'<div class="rng">{rng_text or f"{lo} – {hi}"}</div>', unsafe_allow_html=True)
+    return v
+
 
 # --------------------------------------------------------------------------
-# Inputs
+# Tab 1: inputs
 # --------------------------------------------------------------------------
-col_soil, col_weather = st.columns(2)
+with tab_in:
+    section("soil", "🌱", "Soil data")
+    c = st.columns(4)
+    with c[0]:
+        N = field("soil", "N", "N — Nitrogen (kg/ha)", 0, 140, 90, 1)
+    with c[1]:
+        P = field("soil", "P", "P — Phosphorus (kg/ha)", 5, 145, 42, 1)
+    with c[2]:
+        K = field("soil", "K", "K — Potassium (kg/ha)", 5, 205, 43, 1)
+    with c[3]:
+        ph = field("soil", "ph", "pH — Soil pH", 3.5, 9.9, 6.5, 0.1, "%.1f")
 
-with col_soil:
-    with st.container(border=True):
-        st.markdown('<div class="card-title">Soil</div>', unsafe_allow_html=True)
-        N = st.slider("Nitrogen (N)", 0, 140, 90)
-        P = st.slider("Phosphorus (P)", 5, 145, 42)
-        K = st.slider("Potassium (K)", 5, 205, 43)
-        ph = st.slider("Soil pH", 3.5, 9.9, 6.5, step=0.1)
+    section("wx", "🌤️", "Weather data")
+    c = st.columns(3)
+    with c[0]:
+        temperature = field("wx", "t", "Temperature (°C)", 8.0, 44.0, 21.0, 0.5, "%.1f")
+    with c[1]:
+        humidity = field("wx", "h", "Humidity (%)", 14.0, 100.0, 82.0, 1.0, "%.0f")
+    with c[2]:
+        rainfall = field("wx", "r", "Rainfall (mm)", 20.0, 300.0, 200.0, 1.0, "%.0f")
 
-with col_weather:
-    with st.container(border=True):
-        st.markdown('<div class="card-title">Weather</div>', unsafe_allow_html=True)
-        temperature = st.slider("Temperature (°C)", 8.0, 44.0, 21.0, step=0.5)
-        humidity = st.slider("Humidity (%)", 14.0, 100.0, 82.0, step=1.0)
-        rainfall = st.slider("Rainfall (mm)", 20.0, 300.0, 200.0, step=1.0)
-
-with st.container(border=True):
-    use_fert = st.checkbox("I know the fertilizer amount (kg/ha)")
-    if use_fert:
-        fertilizer = st.slider("Fertilizer (kg/ha)", 0.0, 200.0, float(round(fert_mean, 1)), step=0.5)
-    else:
-        fertilizer = float(fert_mean)
-        st.caption(f"Using the dataset average: {fert_mean:.1f} kg/ha")
-
-go = st.button("Get my recommendation", type="primary")
+    section("fe", "🧴", "Fertilizer (optional)")
+    c = st.columns([1, 2])
+    with c[0]:
+        with st.container(key="fert_box"):
+            use_fert = st.checkbox("I know the amount")
+            fertilizer = st.number_input(
+                "Fertilizer (kg/ha)", min_value=0.0, max_value=200.0,
+                value=float(round(fert_mean, 1)), step=0.5, format="%.1f",
+                disabled=not use_fert,
+            )
+            if not use_fert:
+                fertilizer = float(fert_mean)
+                st.markdown(f'<div class="rng">Using the dataset average ({fert_mean:.1f})</div>', unsafe_allow_html=True)
+    st.write("")
+    go = st.button("Get Recommendation", type="primary")
 
 # --------------------------------------------------------------------------
 # Prediction
@@ -190,9 +249,8 @@ if go:
     )
     proba = rf_model.predict_proba(crop_in)[0]
     order = np.argsort(proba)[::-1][:3]
-    names = le.inverse_transform(rf_model.classes_)  # class names in model order
+    names = le.inverse_transform(rf_model.classes_)
     top = [(str(names[i]), float(proba[i])) for i in order]
-    crop, conf = top[0]
 
     yield_in = pd.DataFrame(
         [[fertilizer, temperature, N, P, K]],
@@ -200,56 +258,94 @@ if go:
     )
     est_yield = float(xgb_model.predict(yield_in)[0])
 
-    # out-of-range warning for the yield model
-    checks = {**YIELD_RANGES}
     values = {"Temperature": temperature, "Nitrogen": N, "Phosphorus": P, "Potassium": K}
-    outside = [f"{k} ({lo}–{hi})" for k, (lo, hi) in checks.items() if not lo <= values[k] <= hi]
-    if use_fert and not 49.8 <= fertilizer <= 80.2:
-        outside.append("Fertilizer (49.8–80.2)")
+    outside = [f"{k} ({lo}–{hi})" for k, (lo, hi) in YIELD_RANGES.items() if not lo <= values[k] <= hi]
+    if use_fert and not FERT_RANGE[0] <= fertilizer <= FERT_RANGE[1]:
+        outside.append(f"Fertilizer ({FERT_RANGE[0]}–{FERT_RANGE[1]})")
 
-    bars = "".join(
-        f'<div class="brow"><span class="nm">{CROP_EMOJI.get(n, "🌱")} {n.capitalize()}</span>'
-        f'<div class="bar"><div class="fill" style="--w:{p*100:.0f}%"></div></div>'
-        f'<span class="pc">{p*100:.0f}%</span></div>'
-        for n, p in top
-    )
+    st.session_state["last"] = {
+        "top": top,
+        "yield": est_yield,
+        "outside": outside,
+        "inputs": [
+            ("N", N), ("P", P), ("K", K), ("pH", ph),
+            ("Temp", f"{temperature:g}°C"), ("Humidity", f"{humidity:g}%"), ("Rain", f"{rainfall:g} mm"),
+        ],
+    }
+    st.toast("Result ready. Opening the Result tab...")
 
-    pos = float(np.clip((est_yield - YIELD_MIN) / (YIELD_MAX - YIELD_MIN), 0, 1)) * 100
-    level = "Low" if pos < 33 else "Medium" if pos < 66 else "High"
-
-    html = (
-        '<div class="results">'
-        '<div class="rcard">'
-        '<div class="rlabel">Recommended crop</div>'
-        f'<div class="remoji">{CROP_EMOJI.get(crop, "🌱")}</div>'
-        f'<div class="rvalue">{crop.capitalize()}</div>'
-        f'<div class="rsub">{conf*100:.0f}% match</div>'
-        f'<div class="bars">{bars}</div>'
-        '</div>'
-        '<div class="rcard second">'
-        '<div class="rlabel">Estimated yield</div>'
-        '<div class="remoji">📈</div>'
-        f'<div class="rvalue white">{est_yield:.2f} t/ha</div>'
-        f'<div class="rsub">{level} compared with the training data</div>'
-        '<div class="gauge"><div class="bar">'
-        f'<div class="marker" style="--pos:{pos:.0f}%"></div></div>'
-        f'<div class="gscale"><span>{YIELD_MIN:.1f}</span><span>{YIELD_MAX:.1f}</span></div></div>'
-        '</div>'
-        '</div>'
-    )
-    st.markdown(html, unsafe_allow_html=True)
-
-    with st.expander("How reliable is the yield estimate?"):
-        if outside:
-            st.write(
-                "Some of your inputs are outside the ranges the yield model was trained on "
-                "(" + ", ".join(outside) + "). For these values the yield number is only a rough guide."
-            )
-        else:
-            st.write("Your inputs are inside the ranges the yield model was trained on.")
-        st.write(
-            "The yield model was trained on a separate dataset and is not specific to the recommended "
-            "crop, so treat it as a general estimate. The crop recommendation does not depend on it."
+# --------------------------------------------------------------------------
+# Tab 2: results
+# --------------------------------------------------------------------------
+with tab_out:
+    last = st.session_state.get("last")
+    if not last:
+        st.markdown(
+            '<div class="empty"><div class="eico">📊</div><b>No result yet</b>'
+            "Fill in your data in the first tab and press Get Recommendation.</div>",
+            unsafe_allow_html=True,
         )
+    else:
+        top, est_yield, outside = last["top"], last["yield"], last["outside"]
+        crop, conf = top[0]
+
+        bars = "".join(
+            f'<div class="brow"><span class="nm">{CROP_EMOJI.get(n, "🌱")} {n.capitalize()}</span>'
+            f'<div class="bar"><div class="fill" style="--w:{p*100:.0f}%"></div></div>'
+            f'<span class="pc">{p*100:.0f}%</span></div>'
+            for n, p in top
+        )
+        pos = float(np.clip((est_yield - YIELD_MIN) / (YIELD_MAX - YIELD_MIN), 0, 1)) * 100
+        level = "Low" if pos < 33 else "Medium" if pos < 66 else "High"
+        chips = "".join(f'<span class="chip">{k} <b>{v}</b></span>' for k, v in last["inputs"])
+
+        html = (
+            '<div class="results">'
+            '<div class="rcard">'
+            '<div class="rlabel">Recommended crop</div>'
+            f'<div class="remoji">{CROP_EMOJI.get(crop, "🌱")}</div>'
+            f'<div class="rvalue">{crop.capitalize()}</div>'
+            f'<div class="rsub">{conf*100:.0f}% match</div>'
+            f'<div class="bars">{bars}</div>'
+            '</div>'
+            '<div class="rcard second">'
+            '<div class="rlabel">Estimated yield</div>'
+            '<div class="remoji">📈</div>'
+            f'<div class="rvalue dark">{est_yield:.2f} t/ha</div>'
+            f'<div class="rsub">{level} compared with the training data</div>'
+            '<div class="gauge"><div class="bar">'
+            f'<div class="marker" style="--pos:{pos:.0f}%"></div></div>'
+            f'<div class="gscale"><span>{YIELD_MIN:.1f}</span><span>{YIELD_MAX:.1f}</span></div></div>'
+            '</div>'
+            '</div>'
+            f'<div class="chips">{chips}</div>'
+        )
+        st.markdown(html, unsafe_allow_html=True)
+
+        with st.expander("How reliable is the yield estimate?"):
+            if outside:
+                st.write(
+                    "Some of your inputs are outside the ranges the yield model was trained on "
+                    "(" + ", ".join(outside) + "). For these values the yield number is only a rough guide."
+                )
+            else:
+                st.write("Your inputs are inside the ranges the yield model was trained on.")
+            st.write(
+                "The yield model was trained on a separate dataset and is not specific to the recommended "
+                "crop, so treat it as a general estimate. The crop recommendation does not depend on it."
+            )
+
+# Jump to the Result tab right after a new prediction
+if go:
+    try:
+        import streamlit.components.v1 as components
+
+        components.html(
+            "<script>try{const t=window.parent.document.querySelectorAll('button[role=\"tab\"]');"
+            "if(t.length>1){t[1].click();}}catch(e){}</script>",
+            height=0,
+        )
+    except Exception:
+        pass
 
 st.markdown('<div class="footer">Smart Agricultural Advisor</div>', unsafe_allow_html=True)
