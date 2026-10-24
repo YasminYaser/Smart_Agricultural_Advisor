@@ -51,7 +51,7 @@ CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
 
-html, body, .stApp, .stApp * {font-family: 'Cairo', 'Segoe UI', sans-serif;}
+.stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {font-family: 'Cairo', 'Segoe UI', sans-serif;}
 .stApp {background: #f1f9f3;}
 #MainMenu, footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
@@ -68,7 +68,7 @@ header[data-testid="stHeader"] {background: transparent;}
 .topbar .en {font-size: .8rem; color: #5a7d67; font-weight: 500;}
 
 /* hero banner */
-.hero {position: relative; overflow: hidden; border-radius: 26px; padding: 54px 28px 96px; text-align: center;
+.hero {position: relative; overflow: hidden; border-radius: 26px; padding: 50px 28px 84px; text-align: center; margin-bottom: 18px;
   background:
     url("__HILLS__") bottom / 100% 110px no-repeat,
     radial-gradient(circle at 78% 18%, rgba(255,226,140,.35), transparent 38%),
@@ -81,18 +81,13 @@ header[data-testid="stHeader"] {background: transparent;}
 .hero p {position: relative; color: #d3ecdb; font-size: 1.02rem; margin: 0 auto; max-width: 560px;}
 @media (max-width: 640px) {.hero h1 {font-size: 1.8rem;} .hero {padding: 40px 18px 90px;}}
 
-/* tabs */
-.stTabs {margin-top: -54px; position: relative; z-index: 2;}
-.stTabs [data-baseweb="tab-list"] {background: #fff; border-radius: 18px 18px 0 0; gap: 0; padding: 0;
-  box-shadow: 0 -4px 20px rgba(15,61,36,.08); border-bottom: 1px solid #e3efe7;}
-.stTabs button[role="tab"] {flex: 1; height: 54px; justify-content: center; border-radius: 18px 18px 0 0;}
-.stTabs button[role="tab"] p {font-weight: 700; font-size: .98rem; color: #6a8a76;}
-.stTabs button[role="tab"][aria-selected="true"] p {color: #14532d;}
-.stTabs [data-baseweb="tab-highlight"] {background: #2e9e5b; height: 3px;}
-.stTabs [data-baseweb="tab-border"] {display: none;}
-.stTabs [data-baseweb="tab-panel"] {background: #fff; border-radius: 0 0 22px 22px; padding: 22px 22px 26px;
-  box-shadow: 0 16px 36px rgba(15,61,36,.10);}
-@media (max-width: 640px) {.stTabs [data-baseweb="tab-panel"] {padding: 16px 12px 20px;}}
+/* main panel */
+.st-key-panel {background: #fff; border-radius: 24px; padding: 24px 22px 26px; box-shadow: 0 16px 36px rgba(15,61,36,.10);
+  border: 1px solid #e3efe7;}
+@media (max-width: 640px) {.st-key-panel {padding: 16px 12px 20px;}}
+.rtitle {display: flex; align-items: center; gap: 10px; font-weight: 800; color: #123d25; font-size: 1.3rem; margin: 30px 0 14px;
+  animation: fadeup .6s ease both;}
+.rtitle .ic {width: 38px; height: 38px; border-radius: 11px; background: #dcf3e3; display: inline-flex; align-items: center; justify-content: center;}
 
 /* section titles */
 .sec {display: flex; align-items: center; gap: 10px; font-weight: 800; color: #123d25; font-size: 1.08rem; margin: 6px 0 12px;}
@@ -182,7 +177,6 @@ HEADER = """
 st.markdown(CSS, unsafe_allow_html=True)
 st.markdown(HEADER, unsafe_allow_html=True)
 
-tab_in, tab_out = st.tabs(["Enter data", "Result"])
 
 
 def section(icon_cls, icon, title):
@@ -200,9 +194,9 @@ def field(prefix, key, label, lo, hi, default, step, fmt=None, rng_text=None):
 
 
 # --------------------------------------------------------------------------
-# Tab 1: inputs
+# Inputs
 # --------------------------------------------------------------------------
-with tab_in:
+with st.container(key="panel"):
     section("soil", "🌱", "Soil data")
     c = st.columns(4)
     with c[0]:
@@ -272,20 +266,17 @@ if go:
             ("Temp", f"{temperature:g}°C"), ("Humidity", f"{humidity:g}%"), ("Rain", f"{rainfall:g} mm"),
         ],
     }
-    st.toast("Result ready. Opening the Result tab...")
 
 # --------------------------------------------------------------------------
-# Tab 2: results
+# Results (shown right under the inputs)
 # --------------------------------------------------------------------------
-with tab_out:
-    last = st.session_state.get("last")
-    if not last:
+last = st.session_state.get("last")
+if last:
+    if True:
         st.markdown(
-            '<div class="empty"><div class="eico">📊</div><b>No result yet</b>'
-            "Fill in your data in the first tab and press Get Recommendation.</div>",
+            '<div id="result-anchor"></div><div class="rtitle"><span class="ic">📊</span>Your result</div>',
             unsafe_allow_html=True,
         )
-    else:
         top, est_yield, outside = last["top"], last["yield"], last["outside"]
         crop, conf = top[0]
 
@@ -335,14 +326,14 @@ with tab_out:
                 "crop, so treat it as a general estimate. The crop recommendation does not depend on it."
             )
 
-# Jump to the Result tab right after a new prediction
+# Scroll down to the result right after a new prediction
 if go:
     try:
         import streamlit.components.v1 as components
 
         components.html(
-            "<script>try{const t=window.parent.document.querySelectorAll('button[role=\"tab\"]');"
-            "if(t.length>1){t[1].click();}}catch(e){}</script>",
+            "<script>try{setTimeout(function(){const e=window.parent.document.getElementById('result-anchor');"
+            "if(e){e.scrollIntoView({behavior:'smooth',block:'start'});}},350);}catch(e){}</script>",
             height=0,
         )
     except Exception:
