@@ -7,7 +7,7 @@ from model_utils import load_or_train
 st.set_page_config(
     page_title="Smart Agricultural Advisor",
     page_icon="🌾",
-    layout="centered",
+    layout="wide",
 )
 
 
@@ -55,7 +55,8 @@ CSS = """
 .stApp {background: #f1f9f3;}
 #MainMenu, footer {visibility: hidden;}
 header[data-testid="stHeader"] {background: transparent;}
-.block-container {max-width: 880px; padding-top: 1.4rem; padding-bottom: 3rem;}
+.block-container {max-width: 1240px; padding: 1.4rem 2.5rem 3rem;}
+@media (max-width: 640px) {.block-container {padding: 1rem .8rem 2rem;}}
 
 @keyframes fadeup {from {opacity: 0; transform: translateY(14px);} to {opacity: 1; transform: translateY(0);}}
 @keyframes glow {0%,100% {opacity: .55; transform: scale(1);} 50% {opacity: .9; transform: scale(1.12);}}
@@ -113,14 +114,14 @@ header[data-testid="stHeader"] {background: transparent;}
 .rng {font-size: .72rem; color: #8aa396; margin: -4px 0 4px 2px;}
 
 /* button */
-.stButton > button {width: 100%; border: none; border-radius: 14px; padding: .8rem 1rem; font-weight: 800; font-size: 1.05rem;
+.stButton > button {width: 100%; max-width: 420px; display: block; margin: 0 auto; border: none; border-radius: 14px; padding: .8rem 1rem; font-weight: 800; font-size: 1.05rem;
   background: linear-gradient(90deg, #1f7a45, #2e9e5b); color: #fff; box-shadow: 0 8px 20px rgba(31,122,69,.30);
   transition: transform .2s ease, box-shadow .2s ease;}
 .stButton > button:hover {color: #fff; transform: translateY(-2px); box-shadow: 0 12px 26px rgba(31,122,69,.42);}
 .stButton > button:active {transform: scale(.98);}
 
 /* results */
-.results {display: grid; grid-template-columns: 1fr 1fr; gap: 16px;}
+.results {display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 980px; margin: 0 auto;}
 @media (max-width: 640px) {.results {grid-template-columns: 1fr;}}
 .rcard {background: #fff; border: 1px solid #dcefe2; border-radius: 20px; padding: 24px 20px; text-align: center;
   box-shadow: 0 10px 28px rgba(31,122,69,.10); animation: pop .6s cubic-bezier(.2,1.2,.4,1) both;}
@@ -208,20 +209,17 @@ with st.container(key="panel"):
     with c[3]:
         ph = field("soil", "ph", "pH — Soil pH", 3.5, 9.9, 6.5, 0.1, "%.1f")
 
-    section("wx", "🌤️", "Weather data")
-    c = st.columns(3)
+    section("wx", "🌤️", "Weather & fertilizer")
+    c = st.columns(4)
     with c[0]:
         temperature = field("wx", "t", "Temperature (°C)", 8.0, 44.0, 21.0, 0.5, "%.1f")
     with c[1]:
         humidity = field("wx", "h", "Humidity (%)", 14.0, 100.0, 82.0, 1.0, "%.0f")
     with c[2]:
         rainfall = field("wx", "r", "Rainfall (mm)", 20.0, 300.0, 200.0, 1.0, "%.0f")
-
-    section("fe", "🧴", "Fertilizer (optional)")
-    c = st.columns([1, 2])
-    with c[0]:
+    with c[3]:
         with st.container(key="fert_box"):
-            use_fert = st.checkbox("I know the amount")
+            use_fert = st.checkbox("Fertilizer (optional)")
             fertilizer = st.number_input(
                 "Fertilizer (kg/ha)", min_value=0.0, max_value=200.0,
                 value=float(round(fert_mean, 1)), step=0.5, format="%.1f",
@@ -229,7 +227,11 @@ with st.container(key="panel"):
             )
             if not use_fert:
                 fertilizer = float(fert_mean)
-                st.markdown(f'<div class="rng">Using the dataset average ({fert_mean:.1f})</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="rng">0 – 200</div>' if use_fert
+                else f'<div class="rng">Using average ({fert_mean:.1f})</div>',
+                unsafe_allow_html=True,
+            )
     st.write("")
     go = st.button("Get Recommendation", type="primary")
 
